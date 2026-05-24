@@ -1,10 +1,14 @@
 'use client'
 
 import { Box, Flex, Text, Image, Grid, GridItem, Button } from '@chakra-ui/react'
+import NavBar from '../../components/Navbar'
 
 export default function ProfilePage() {
     const topEight = ['Person1', 'Person2', 'Person3', 'Person4', 'Person5', 'Person6', 'Person7', 'Person8',]
+
     return (
+        <>
+        <NavBar />
         <Box bg="blue" minH="100vh" p={4}>
             <Text>Profile Page coming soon</Text>
 
@@ -65,5 +69,6 @@ export default function ProfilePage() {
             </Grid>
 
         </Box>
+        </>
     )
 }
