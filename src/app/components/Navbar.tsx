@@ -7,14 +7,15 @@ export default function NavBar(){
                 <Text pl='5'>YourSpace</Text>
                 <Spacer />
 
-                <Flex>
-                <Input size='sm' w="200px" placeholder='Search'/>
-                <Button>Search</Button>
+                <Flex gap='3px'>
+                <Input size='sm' w="200px" placeholder='Search' bg='white'/>
+                    <Button marginRight='35px' variant='ghost' color='white' >Search</Button>
                 </Flex>
 
-                <Flex>
-                    <Button>Home</Button>
-                    <Button>Browse</Button>
+                <Flex gap='10px' marginLeft='5px' alignItems='center'>
+                    <Button variant='ghost' color='white'>Home</Button>
+                    <Text color='white'>|</Text>
+                    <Button variant='ghost' color='white'>Browse</Button>
                     </Flex>
                 
 
