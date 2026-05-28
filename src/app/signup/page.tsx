@@ -1,5 +1,6 @@
 'use client'
 import React, {useState} from 'react';
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase';
 import {
     Button,
@@ -8,9 +9,14 @@ import {
     Box,
     Input,
     Stack,
+    Text
 } from "@chakra-ui/react";
 
 export default function SignUpPage() {
+
+    const router = useRouter();
+    const [errorMessage, setErrorMessage] = useState('');
+    
 
     const [formData, setFormData] = useState({
         email: '',
@@ -30,6 +36,13 @@ export default function SignUpPage() {
         email: formData.email,
         password: formData.password
     })
+
+    if (error){
+        setErrorMessage(error.message);
+    }
+    else{
+        router.push('/profile/chris');
+    }
 }
 
     return (
@@ -42,10 +55,12 @@ export default function SignUpPage() {
                         <Fieldset.HelperText>
                             Please provide your email and password details below.
                         </Fieldset.HelperText>
+                        
                     </Stack>
 
                     <Fieldset.Content>
                         <Field.Root>
+                        {errorMessage && <Text color='red'>{errorMessage}</Text>}
                         <Field.Label color='black'>Email</Field.Label>
                         <Input name="email" onChange={handleInputChange} />
                         </Field.Root>
