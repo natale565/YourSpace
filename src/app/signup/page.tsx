@@ -41,7 +41,7 @@ export default function SignUpPage() {
         setErrorMessage(error.message);
     }
     else{
-        router.push('/profile/chris');
+        router.push('/onboarding');
     }
 }
 
