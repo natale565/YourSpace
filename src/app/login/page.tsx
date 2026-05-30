@@ -59,12 +59,12 @@ export default function LoginPage() {
                         <Field.Root>
                         {errorMessage && <Text color='red'>{errorMessage}</Text>}
                         <Field.Label color='black'>Email</Field.Label>
-                        <Input name="email" onChange={handleInputChange} />
+                        <Input name="email" onChange={handleInputChange} color='black' />
                         </Field.Root>
 
                         <Field.Root>
                         <Field.Label color='black'>Password</Field.Label>
-                        <Input name="password" type="password" onChange={handleInputChange} />
+                        <Input name="password" type="password" onChange={handleInputChange} color='black' />
                         </Field.Root>
                     </Fieldset.Content>
 
