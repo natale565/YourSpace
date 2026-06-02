@@ -50,11 +50,11 @@ export default function OnboardingPage() {
 
         const { error } = await supabase
             .from('profiles')
-            .update({ 
+            .update({
                 username: formData.username,
                 display_name: formData.displayName,
                 location: formData.location
-             })
+            })
             .eq('id', user.id)
         console.log('update error:', error)
 
