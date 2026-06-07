@@ -12,7 +12,6 @@ import {
     Stack,
     Text
 } from "@chakra-ui/react";
-import { form } from 'framer-motion/client';
 
 export default function OnboardingPage() {
 
@@ -40,12 +39,15 @@ export default function OnboardingPage() {
 
         const { data: { user } } = await supabase.auth.getUser();
 
-        console.log('formData:', formData)
-        console.log('user:', user)
 
         if (!user) {
             router.push('/login');
             return;
+        }
+
+        if (formData.username.includes(' ')) {
+            setErrorMessage('Username cannot contain spaces')
+            return
         }
 
         const { error } = await supabase
