@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase';
 import {
@@ -37,6 +37,28 @@ export default function EditPage() {
             [name]: value
         });
     }
+
+    useEffect(() => {
+        async function fetchProfile() {
+            const supabase = createClient()
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('username', username)
+                .single()
+
+            if (data) setFormData({
+                displayName: data.display_name || '',
+                location: data.location || '',
+                aboutMe: data.about_me || '',
+                whoIdLikeToMeet: data.who_id_like_to_meet || ''
+            })
+
+            const { data: { user } } = await supabase.auth.getUser()
+        }
+
+        fetchProfile()
+    }, [username])
 
     async function handleSubmit(){
 
@@ -89,7 +111,7 @@ export default function EditPage() {
                         <Field.Label color='black'>
                             Display Name
                         </Field.Label>
-                        <Input name='displayName' color='black' onChange={handleInputChange}></Input>
+                        <Input name='displayName' color='black' onChange={handleInputChange} value={formData.displayName}></Input>
                     </Field.Root>
 
 
@@ -97,7 +119,7 @@ export default function EditPage() {
                         <Field.Label color='black'>
                             Location
                         </Field.Label>
-                        <Input name='location' color='black' onChange={handleInputChange}></Input>
+                        <Input name='location' color='black' onChange={handleInputChange} value={formData.location}></Input>
                     </Field.Root>
 
 
@@ -105,7 +127,7 @@ export default function EditPage() {
                         <Field.Label color='black'>
                             About Me
                         </Field.Label>
-                        <Textarea name='aboutMe' color='black' h='7rem' onChange={handleInputChange}></Textarea>
+                        <Textarea name='aboutMe' color='black' h='7rem' onChange={handleInputChange} value={formData.aboutMe}></Textarea>
                     </Field.Root>
 
 
@@ -113,7 +135,7 @@ export default function EditPage() {
                         <Field.Label color='black'>
                             Who I&apos;d Like To Meet
                         </Field.Label>
-                        <Textarea name='whoIdLikeToMeet' color='black' h='7rem' onChange={handleInputChange}></Textarea>
+                        <Textarea name='whoIdLikeToMeet' color='black' h='7rem' onChange={handleInputChange} value={formData.whoIdLikeToMeet}></Textarea>
                     </Field.Root>
                 </Fieldset.Content>
 
