@@ -5,8 +5,10 @@ import NavBar from '../../components/Navbar'
 import { createClient } from '@/lib/supabase'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link';
 
 type Profile = {
+    id: string
     display_name: string | null
     about_me: string | null
     who_id_like_to_meet: string | null
@@ -17,6 +19,7 @@ export default function ProfilePage() {
 
     const params = useParams();
     const username = params.username;
+    const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null)
 
     const [profile, setProfile] = useState<Profile | null>(null);
 
@@ -30,12 +33,17 @@ export default function ProfilePage() {
                 .single()
 
             if (data) setProfile(data as Profile)
+
+            const { data: { user } } = await supabase.auth.getUser()
+            setCurrentUser(user)
         }
 
         fetchProfile()
 
     }, [username])
 
+    console.log('currentUser id:', currentUser?.id)
+    console.log('profile id:', profile?.id)
 
     return (
         <>
@@ -64,6 +72,11 @@ export default function ProfilePage() {
                                 <Text>My Music</Text>
                             </Box>
 
+                            {currentUser?.id === profile?.id && username && (
+                                <Link href={`/profile/${username}/edit`}>
+                                    <Button bg='blue' size='sm'>Edit</Button>
+                                </Link>
+                            )}
 
                             <Box borderWidth='2px' >
                                 <Text bg='blue' color='white' padding='7px'>About Me</Text>
