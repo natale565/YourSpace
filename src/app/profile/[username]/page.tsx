@@ -42,6 +42,8 @@ export default function ProfilePage() {
 
     }, [username])
 
+    console.log('currentUser id:', currentUser?.id)
+    console.log('profile id:', profile?.id)
 
     return (
         <>

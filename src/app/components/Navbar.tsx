@@ -14,6 +14,7 @@ export default function NavBar(){
         const supabase = createClient()
         await supabase.auth.signOut()
         router.push('/login')
+        router.refresh()
     }
 
     return (

@@ -41,7 +41,17 @@ export default function LoginPage() {
         setErrorMessage(error.message);
     }
     else{
-        router.push('/profile/chris');
+        const { data: profile } = await createClient()
+            .from('profiles')
+            .select('username')
+            .eq('id', data.user.id)
+            .single()
+
+        if (profile?.username) {
+            router.push(`/profile/${profile.username}`)
+        } else {
+            router.push('/onboarding')
+        }
     }
 }
 
