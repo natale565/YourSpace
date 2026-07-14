@@ -2,12 +2,14 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase';
 import {
     Button,
     Field,
     Fieldset,
     Box,
+    Heading,
     Input,
     Stack,
     Text
@@ -17,7 +19,7 @@ export default function OnboardingPage() {
 
     const router = useRouter();
     const [errorMessage, setErrorMessage] = useState('');
-
+    const [isLoading, setIsLoading] = useState(false);
 
     const [formData, setFormData] = useState({
         username: '',
@@ -32,76 +34,146 @@ export default function OnboardingPage() {
             [name]: value
         });
     }
-    async function handleSubmit() {
 
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        setErrorMessage('');
+
+        const username = formData.username.trim().toLowerCase();
+
+        if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+            setErrorMessage('Username must be 3-20 characters: letters, numbers, and underscores only.');
+            return;
+        }
+
+        setIsLoading(true);
         const supabase = createClient();
 
-
         const { data: { user } } = await supabase.auth.getUser();
-
 
         if (!user) {
             router.push('/login');
             return;
         }
 
-        if (formData.username.includes(' ')) {
-            setErrorMessage('Username cannot contain spaces')
-            return
-        }
-
         const { error } = await supabase
             .from('profiles')
             .update({
-                username: formData.username,
-                display_name: formData.displayName,
-                location: formData.location
+                username: username,
+                display_name: formData.displayName.trim(),
+                location: formData.location.trim()
             })
             .eq('id', user.id)
-        console.log('update error:', error)
 
         if (error) {
-            setErrorMessage(error.message);
+            if (error.code === '23505') {
+                setErrorMessage('That username is taken. Try another one.');
+            } else {
+                setErrorMessage(error.message);
+            }
+            setIsLoading(false);
+            return;
         }
-        else {
-            router.push(`/profile/${formData.username}`);
-        }
+
+        router.push(`/profile/${username}`);
     }
 
     return (
-        <Box minH='100vh' display='flex' alignItems='center' justifyContent='center' bg="#f5f5f5">
+        <Box
+            minH='100vh'
+            display='flex'
+            flexDirection='column'
+            alignItems='center'
+            justifyContent='center'
+            bgGradient='to-b'
+            gradientFrom='blue.600'
+            gradientTo='#eef3fb'
+            px='4'
+        >
+            <Link href='/'>
+                <Heading size='xl' color='white' mb='6' letterSpacing='tight'>
+                    YourSpace
+                </Heading>
+            </Link>
 
-            <Fieldset.Root size="lg" maxW="md" bg='white' p='8' borderRadius='md' boxShadow='md'>
-                <Stack>
-                    <Fieldset.Legend>Tell Us About Yourself</Fieldset.Legend>
-                    <Fieldset.HelperText>
-                        Fill out the information below
-                    </Fieldset.HelperText>
+            <Box as='form' onSubmit={handleSubmit} w='100%' maxW='md'>
+                <Fieldset.Root
+                    size="lg"
+                    bg='white'
+                    p='8'
+                    borderRadius='lg'
+                    boxShadow='xl'
+                    borderWidth='1px'
+                    borderColor='blue.200'
+                >
+                    <Stack>
+                        <Fieldset.Legend fontSize='lg' fontWeight='bold' color='gray.800'>
+                            Almost there!
+                        </Fieldset.Legend>
+                        <Fieldset.HelperText>
+                            Pick a username and tell people a little about yourself.
+                        </Fieldset.HelperText>
+                    </Stack>
 
-                </Stack>
+                    <Fieldset.Content>
+                        {errorMessage && (
+                            <Box bg='red.50' borderWidth='1px' borderColor='red.200' borderRadius='md' p='3'>
+                                <Text color='red.600' fontSize='sm'>{errorMessage}</Text>
+                            </Box>
+                        )}
 
-                <Fieldset.Content>
-                    <Field.Root>
-                        {errorMessage && <Text color='red'>{errorMessage}</Text>}
-                        <Field.Label color='black'>Username</Field.Label>
-                        <Input name="username" onChange={handleInputChange} color='black' />
-                    </Field.Root>
+                        <Field.Root required>
+                            <Field.Label color='gray.700'>Username</Field.Label>
+                            <Input
+                                name="username"
+                                autoComplete="off"
+                                placeholder="tom_2026"
+                                value={formData.username}
+                                onChange={handleInputChange}
+                                color='black'
+                            />
+                            <Field.HelperText>
+                                Your profile URL: yourspace.com/profile/{formData.username.trim().toLowerCase() || 'username'}
+                            </Field.HelperText>
+                        </Field.Root>
 
-                    <Field.Root>
-                        <Field.Label color='black'>Display Name</Field.Label>
-                        <Input name="displayName" onChange={handleInputChange} color='black' />
-                    </Field.Root>
+                        <Field.Root required>
+                            <Field.Label color='gray.700'>Display Name</Field.Label>
+                            <Input
+                                name="displayName"
+                                placeholder="How your name shows on your profile"
+                                value={formData.displayName}
+                                onChange={handleInputChange}
+                                color='black'
+                            />
+                        </Field.Root>
 
-                    <Field.Root>
-                        <Field.Label color='black'>Location</Field.Label>
-                        <Input name="location" onChange={handleInputChange} color='black' />
-                    </Field.Root>
-                </Fieldset.Content>
+                        <Field.Root>
+                            <Field.Label color='gray.700'>Location</Field.Label>
+                            <Input
+                                name="location"
+                                placeholder="City, State (optional)"
+                                value={formData.location}
+                                onChange={handleInputChange}
+                                color='black'
+                            />
+                        </Field.Root>
+                    </Fieldset.Content>
 
-                <Button type="submit" alignSelf="flex-start" width='full' bg='blue' marginTop='20px' onClick={handleSubmit}>
-                    Submit
-                </Button>
-            </Fieldset.Root>
+                    <Button
+                        type="submit"
+                        width='full'
+                        bg='blue.600'
+                        color='white'
+                        _hover={{ bg: 'blue.700' }}
+                        marginTop='20px'
+                        loading={isLoading}
+                        loadingText='Setting up your space...'
+                    >
+                        Finish Setup
+                    </Button>
+                </Fieldset.Root>
+            </Box>
         </Box>
     )
 }

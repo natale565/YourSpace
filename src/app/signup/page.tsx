@@ -42,8 +42,8 @@ export default function SignUpPage() {
             setErrorMessage('Passwords do not match.');
             return;
         }
-        if (formData.password.length < 6) {
-            setErrorMessage('Password must be at least 6 characters.');
+        if (formData.password.length < 8) {
+            setErrorMessage('Password must be at least 8 characters.');
             return;
         }
 
@@ -130,7 +130,7 @@ export default function SignUpPage() {
                                 onChange={handleInputChange}
                                 color='black'
                             />
-                            <Field.HelperText>At least 6 characters.</Field.HelperText>
+                            <Field.HelperText>At least 8 characters.</Field.HelperText>
                         </Field.Root>
 
                         <Field.Root required>
