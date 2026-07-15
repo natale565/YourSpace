@@ -59,16 +59,21 @@ function SectionBox({ title, children }: { title: string; children: React.ReactN
 export default function Home() {
   const [people, setPeople] = useState<Profile[]>(FALLBACK_PEOPLE)
 
+  // On mount: load the 8 newest members for the "Cool New People" grid.
+  // This works even for logged-out visitors because the RLS policy on
+  // `profiles` allows public SELECTs (see supabase_setup.sql).
   useEffect(() => {
     async function fetchNewPeople() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('profiles')
         .select('id, username, display_name, location')
-        .not('display_name', 'is', null)
-        .order('created_at', { ascending: false })
+        .not('display_name', 'is', null)          // skip empty/unfinished profiles
+        .order('created_at', { ascending: false }) // newest first
         .limit(8)
 
+      // Only replace the placeholder people if we actually got real ones —
+      // on any error the page still renders with FALLBACK_PEOPLE.
       if (!error && data && data.length > 0) {
         setPeople(data as Profile[])
       }

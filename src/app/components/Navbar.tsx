@@ -22,6 +22,8 @@ export default function NavBar() {
     const [showSuggestions, setShowSuggestions] = useState(false)
     const searchRef = useRef<HTMLDivElement>(null)
 
+    // Full search: submitting the form (Enter or the Search button) sends
+    // the user to the /search results page with the query in the URL.
     function handleSearch(e: React.FormEvent) {
         e.preventDefault()
         const q = searchQuery.trim()
@@ -31,6 +33,8 @@ export default function NavBar() {
         }
     }
 
+    // Updates the input state on every keystroke, and hides the dropdown
+    // when the query drops below 2 characters.
     function handleQueryChange(value: string) {
         setSearchQuery(value)
         if (value.trim().length < 2) {
@@ -39,15 +43,22 @@ export default function NavBar() {
         }
     }
 
-    // Debounced typeahead
+    // Typeahead: re-runs whenever searchQuery changes. The 250ms setTimeout
+    // "debounces" it — if the user keeps typing, the cleanup function cancels
+    // the pending timer, so we only query Supabase once typing pauses.
     useEffect(() => {
         const q = searchQuery.trim()
         if (q.length < 2) return
 
         const timer = setTimeout(async () => {
             const supabase = createClient()
+            // Escape %, _ and , — they mean something in LIKE patterns and
+            // the .or() filter syntax, so raw user input can't inject them.
             const escaped = q.replace(/[%_,]/g, '\\$&')
 
+            // ilike = case-insensitive LIKE; %...% matches anywhere in the
+            // string. The .or() checks username OR display_name in one query.
+            // Skips profiles that never finished onboarding (null username).
             const { data, error } = await supabase
                 .from('profiles')
                 .select('id, username, display_name')
@@ -61,6 +72,7 @@ export default function NavBar() {
             }
         }, 250)
 
+        // Cleanup: cancels this timer if the user types again before it fires.
         return () => clearTimeout(timer)
     }, [searchQuery])
 
@@ -81,10 +93,13 @@ export default function NavBar() {
         router.push(`/profile/${suggestion.username}`)
     }
 
+    // On mount: figure out who (if anyone) is logged in, so the navbar can
+    // show the right buttons (Log In / Sign Up vs My Profile / Logout).
     useEffect(() => {
         const supabase = createClient()
 
         async function loadUser() {
+            // Reads the session cookie and verifies it with Supabase.
             const { data: { user } } = await supabase.auth.getUser()
 
             if (!user) {
@@ -95,6 +110,7 @@ export default function NavBar() {
 
             setIsLoggedIn(true)
 
+            // Fetch their username so "My Profile" can link to /profile/<name>.
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('username')
@@ -106,13 +122,18 @@ export default function NavBar() {
 
         loadUser()
 
+        // Subscribe to auth events (login, logout, token refresh) so the
+        // navbar updates instantly without a page reload.
         const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
             loadUser()
         })
 
+        // Cleanup: stop listening when the navbar unmounts.
         return () => subscription.unsubscribe()
     }, [])
 
+    // Ends the session: clears the auth cookies and notifies
+    // onAuthStateChange listeners (like the one above).
     async function handleLogout() {
         const supabase = createClient()
         await supabase.auth.signOut()

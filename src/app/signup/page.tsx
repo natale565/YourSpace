@@ -26,6 +26,8 @@ export default function SignUpPage() {
         confirmPassword: ''
     });
 
+    // Keeps formData in sync as the user types; the input's `name` attribute
+    // is the state key, so one handler covers all three fields.
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData({
@@ -35,9 +37,11 @@ export default function SignUpPage() {
     }
 
     async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
+        e.preventDefault(); // stop the browser's default full-page form POST
         setErrorMessage('');
 
+        // Client-side checks first — no point hitting Supabase with input
+        // we already know is bad.
         if (formData.password !== formData.confirmPassword) {
             setErrorMessage('Passwords do not match.');
             return;
@@ -49,17 +53,25 @@ export default function SignUpPage() {
 
         setIsLoading(true);
 
+        // Creates the account in Supabase Auth (the auth.users table).
+        // Two side effects happen automatically:
+        // 1. Our database trigger (see supabase_setup.sql) inserts a blank
+        //    row into `profiles` with the new user's id.
+        // 2. Supabase logs the user in and stores session cookies, so
+        //    they're already authenticated when they land on /onboarding.
         const { error } = await createClient().auth.signUp({
             email: formData.email,
             password: formData.password
         })
 
         if (error) {
+            // e.g. "User already registered"
             setErrorMessage(error.message);
             setIsLoading(false);
             return;
         }
 
+        // Onboarding fills in the blank profile row (username, etc.)
         router.push('/onboarding');
     }
 

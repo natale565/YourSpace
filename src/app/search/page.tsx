@@ -29,6 +29,8 @@ function SearchResults() {
     const [results, setResults] = useState<Profile[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
+    // Runs the search whenever the ?q= value in the URL changes (including
+    // on first load, so the page works when someone shares a search link).
     useEffect(() => {
         async function search() {
             if (!query) {
@@ -40,9 +42,14 @@ function SearchResults() {
             setIsLoading(true)
             const supabase = createClient()
 
-            // Escape characters that have meaning in a LIKE pattern
+            // Escape %, _ and , — they have special meaning in LIKE patterns
+            // and the .or() filter syntax, so user input can't inject them.
             const escaped = query.replace(/[%_,]/g, '\\$&')
 
+            // ilike = case-insensitive LIKE; %...% matches anywhere in the
+            // string. The .or() matches against username OR display_name.
+            // Profiles without a username never finished onboarding, so
+            // they're excluded (there'd be no profile page to link to).
             const { data, error } = await supabase
                 .from('profiles')
                 .select('id, username, display_name, location')

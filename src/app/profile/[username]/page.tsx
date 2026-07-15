@@ -57,9 +57,14 @@ export default function ProfilePage() {
     const [profile, setProfile] = useState<Profile | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
+    // Fetch the profile whose username matches the URL (/profile/<username>),
+    // plus the currently logged-in user so we can tell if this is their page.
     useEffect(() => {
         async function fetchProfile() {
             const supabase = createClient()
+
+            // .single() returns exactly one row, or null in `data` if no
+            // profile has this username (that's our "not found" case).
             const { data } = await supabase
                 .from('profiles')
                 .select('*')
@@ -68,6 +73,7 @@ export default function ProfilePage() {
 
             setProfile(data as Profile | null)
 
+            // Reads the session cookie; returns null when logged out.
             const { data: { user } } = await supabase.auth.getUser()
             setCurrentUser(user)
             setIsLoading(false)
@@ -76,6 +82,9 @@ export default function ProfilePage() {
         fetchProfile()
     }, [username])
 
+    // The profiles primary key IS the auth user's UUID, so comparing ids
+    // tells us whether the viewer owns this profile (shows Edit instead of
+    // Add Friend / Send Message).
     const isOwnProfile = currentUser?.id === profile?.id
     const memberSince = profile?.created_at
         ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })

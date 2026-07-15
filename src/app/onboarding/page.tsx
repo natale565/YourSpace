@@ -36,11 +36,14 @@ export default function OnboardingPage() {
     }
 
     async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
+        e.preventDefault(); // stop the browser's default full-page form POST
         setErrorMessage('');
 
+        // Normalize the username so URLs are predictable (all lowercase).
         const username = formData.username.trim().toLowerCase();
 
+        // Validate format before touching the database: 3-20 chars,
+        // lowercase letters/numbers/underscores only.
         if (!/^[a-z0-9_]{3,20}$/.test(username)) {
             setErrorMessage('Username must be 3-20 characters: letters, numbers, and underscores only.');
             return;
@@ -49,13 +52,19 @@ export default function OnboardingPage() {
         setIsLoading(true);
         const supabase = createClient();
 
+        // Who is logged in right now? getUser() reads the session cookie
+        // and verifies it with the Supabase server.
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
+            // Session expired or they navigated here logged out.
             router.push('/login');
             return;
         }
 
+        // UPDATE (not insert) — the signup trigger already created a blank
+        // profiles row with this user's id; we're just filling it in.
+        // RLS only lets users update the row where id = their own auth.uid().
         const { error } = await supabase
             .from('profiles')
             .update({
@@ -66,6 +75,8 @@ export default function OnboardingPage() {
             .eq('id', user.id)
 
         if (error) {
+            // 23505 = Postgres unique_violation, thrown by our unique index
+            // on lower(username) when the name is already claimed.
             if (error.code === '23505') {
                 setErrorMessage('That username is taken. Try another one.');
             } else {

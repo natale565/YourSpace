@@ -25,6 +25,9 @@ export default function LoginPage() {
         password: ''
     });
 
+    // Keeps the formData state in sync as the user types. The input's `name`
+    // attribute (email/password) is used as the key, so one handler covers
+    // every field.
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData({
@@ -33,11 +36,15 @@ export default function LoginPage() {
         });
     }
 
+    // Runs when the form is submitted (button click or Enter key).
     async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
+        e.preventDefault(); // stop the browser's default full-page form POST
         setErrorMessage('');
         setIsLoading(true);
 
+        // Ask Supabase Auth to verify the email/password. On success it
+        // stores the session tokens in cookies automatically, so every
+        // later query runs as this user.
         const supabase = createClient();
         const { data, error } = await supabase.auth.signInWithPassword({
             email: formData.email,
@@ -45,17 +52,23 @@ export default function LoginPage() {
         })
 
         if (error) {
+            // e.g. "Invalid login credentials" — shown in the red error box
             setErrorMessage(error.message);
             setIsLoading(false);
             return;
         }
 
+        // Login worked. Look up this user's row in the `profiles` table
+        // (data.user.id is the auth user's UUID, which is also the profiles
+        // primary key) to find out where to send them.
         const { data: profile } = await supabase
             .from('profiles')
             .select('username')
             .eq('id', data.user.id)
             .single()
 
+        // Users who never finished onboarding have no username yet —
+        // send them there instead of a broken profile URL.
         if (profile?.username) {
             router.push(`/profile/${profile.username}`)
         } else {
